@@ -9,6 +9,8 @@ from pymongo import MongoClient
 from marshmallow.exceptions import ValidationError
 
 from . import __version__
+from .schemas import EntrySchema, ScheduleMetadataSchema
+
 
 __all__ = [
     'MongoPersistentScheduler'
