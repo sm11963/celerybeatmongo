@@ -74,7 +74,6 @@ class TestEntrySchema():
                               total_run_count=99)
 
         dumped = EntrySchema(strict=True).dump(entry).data
-        print(dumped)
         loaded = EntrySchema(strict=True).load(dumped).data
 
         assert entry.name == loaded.name

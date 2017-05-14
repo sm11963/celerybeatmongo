@@ -47,7 +47,6 @@ class ScheduleSchema(marshmallow.Schema):
 
     @marshmallow.post_load
     def make_schedule(self, data):
-        print(data)
         return data[data['schedule_type']]
 
 
