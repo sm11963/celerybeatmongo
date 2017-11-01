@@ -61,6 +61,8 @@ class MongoPersistentScheduler(Scheduler):
                          "CELERY_MONGO_SCHEDULER_URI",
                          "mongodb://localhost:27017/celerybeat")
 
+        db_name = getattr(current_app.conf, "CELERY_MONGO_SCHEDULER_DB")
+
         db_entries_col = getattr(current_app.conf,
                                  "CELERY_MONGO_SCHEDULER_ENTRIES_COL",
                                  "celerybeat_entries")
@@ -72,7 +74,12 @@ class MongoPersistentScheduler(Scheduler):
         info("MongoPersistentScheduler: using %s:%s,%s",
              db_uri, db_entries_col, db_meta_col)
 
-        self._db = MongoClient(db_uri).get_default_database()
+        client = MongoClient(db_uri)
+        if db_name is None:
+            self._db = client.get_database()
+        else:
+            self._db = client[db_name]
+
         self._entries_col = self._db[db_entries_col]
         self._meta_col = self._db[db_meta_col]
 
@@ -94,10 +101,13 @@ class MongoPersistentScheduler(Scheduler):
         tz = self.app.conf.timezone
         utc = self.app.conf.enable_utc
         if meta is not None:
-            if meta['tz'] != tz:
-                warning('MongoPersistentScheduler: Reset - Timezone changed from %r to %r', stored_tz, tz)
+            stored_tz = meta['tz']
+            if stored_tz != tz:
+                warning('MongoPersistentScheduler: Reset - Timezone changed from %r to %r',
+                        stored_tz, tz)
                 self._clear_entries()   # Timezone changed, reset db!
-            if meta['utc_enabled'] != utc:
+            stored_utc = meta['utc_enabled']
+            if stored_utc != utc:
                 choices = {True: 'enabled', False: 'disabled'}
                 warning('Reset: UTC changed from %s to %s',
                         choices[stored_utc], choices[utc])
